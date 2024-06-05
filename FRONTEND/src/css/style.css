@@ -1,0 +1,142 @@
+* {
+  box-sizing: border-box;
+  background-color: #fff;
+}
+
+:root {
+  --color: #6d6c69;
+}
+
+.container {
+  background-color: #fdfeff;
+  width: 100%;
+  height: 100vh;
+  padding-top: 100px;
+}
+
+button {
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--color);
+  border: 1px solid var(--color);
+  margin-bottom: 20px;
+  padding: 10px;
+}
+
+.form-tickets {
+  position: relative;
+  display: flex;
+  background: linear-gradient(180deg, #faf8f9, #e9dfe4, #f2eeee);
+  width: 70%;
+  margin: 0 auto;
+  padding: 30px;
+  border-radius: 10px 10px 0 0;
+  min-height: 500px;
+  flex-direction: column;
+}
+
+.btn-add-ticket {
+  align-self: flex-end;
+  width: 160px;
+  height: 40px;
+}
+
+button:hover {
+  cursor: pointer;
+  border: none;
+  outline: 2px solid rgb(150, 150, 167);
+}
+
+.tickets-container {
+  width: 100%;
+}
+
+.new-task {
+  width: 100%;
+  margin-top: 1px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 10fr 4fr 1fr 1fr;
+  outline: 1px solid var(--color);
+  padding: 10px;
+  color: var(--color);
+  cursor: pointer;
+}
+
+.circle {
+  width: 50px;
+  height: 50px;
+  border: 1px solid var(--color);
+  border-radius: 50%;
+}
+
+.task-text {
+  padding-top: 10px;
+  font-size: 18px;
+}
+
+.description {
+  margin: 20px 0;
+  background-color: #faf8f8;
+  padding: 20px;
+  border-radius: 10px;
+  cursor: default;
+}
+
+.hidden {
+  display: none;
+}
+
+.date-box {
+  padding-top: 10px;
+  font-size: 18px;
+}
+
+.editing-btn {
+  background: url(../img/free-icon-pencil-1828918.png) center no-repeat;
+}
+
+.delete-btn {
+  background: url(../img/free-icon-close.png) center no-repeat;
+}
+
+.tick-true {
+  background: url(../img/free-icon-check-mark-5291043.png) center no-repeat;
+}
+
+.modal {
+  position: absolute;
+  top: 60px;
+  left: 25%;
+  min-width: 360px;
+  width: 50%;
+  min-height: 50px;
+  padding: 20px;
+  justify-content: center;
+  font-size: 20px;
+  border: 1px solid var(--color);
+  border-radius: 10px;
+}
+
+.header {
+  text-align: center;
+  margin: 10px auto 20px;
+}
+
+.input {
+  margin: 10px 0;
+  padding: 10px;
+  font-size: 20px;
+}
+.ticket-form-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.ticket-form-buttons {
+  justify-content: flex-end;
+  margin-top: 20px;
+  gap: 10px;
+  display: flex;
+}
