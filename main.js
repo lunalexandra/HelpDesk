@@ -20,7 +20,18 @@ class Modal {
             </div>
             `;
   }
+  checkModal() {
+    const modal = document.querySelector(".modal");
+    if (modal) {
+      modal.style.outline = "5px solid lightblue";
+      return true;
+    }
+    return false;
+  }
   render(container) {
+    if (this.checkModal()) {
+      return;
+    }
     container.insertAdjacentHTML("beforeend", this.markup());
     this.element = container.querySelector(".ticket-form");
     this.bindEvents();
@@ -115,17 +126,26 @@ class CreateTicketForm extends Modal {
         <label for="full-description">Подробное описание</label>
         <textarea name="full-description" class="input"></textarea>
     `;
+    this.callback = null;
   }
   getValue() {
     this.shortDescription = this.element.querySelector('input[name="short-description"]').value;
-    this.fullDescription = this.element.querySelector('textarea[name="full-description"]').value;
+    this.fullDescription = this.element.querySelector('textarea[name="full-description"]').value.replace(/\r?\n/g, "\n");
   }
-  clickOk() {
+  async clickOk() {
     this.getValue();
     if (this.shortDescription && this.shortDescription.trim()) {
-      this.onOk(() => createTicket(this.shortDescription, this.fullDescription));
-      location.reload();
-    } else this.close();
+      try {
+        await this.onOk(() => createTicket(this.shortDescription, this.fullDescription));
+        if (this.callback) {
+          this.callback();
+        }
+      } catch (error) {
+        console.error("Error creating ticket:", error);
+      }
+    } else {
+      this.close();
+    }
   }
   bindEvents() {
     this.element.querySelector(".ok-btn").addEventListener("click", e => {
@@ -181,10 +201,13 @@ class DeleteTicketForm extends Modal {
         <div>Вы уверены, что хотите удалить тикет? Это действие необратимо.</div>
     `;
     this.id = id;
+    this.callback = null;
   }
   clickOk() {
     this.onOk(() => deleteTicketById(this.id));
-    location.reload();
+    if (this.callback) {
+      this.callback();
+    }
   }
   bindEvents() {
     this.element.querySelector(".ok-btn").addEventListener("click", e => {
@@ -205,6 +228,7 @@ class UpdateTicketForm extends CreateTicketForm {
     super();
     this.title = "Изменить тикет";
     this.id = id;
+    this.callback = null;
   }
   async fillInput() {
     try {
@@ -226,8 +250,10 @@ class UpdateTicketForm extends CreateTicketForm {
           name: this.shortDescription,
           description: this.fullDescription
         });
+        if (this.callback) {
+          this.callback();
+        }
         this.close();
-        location.reload();
       } catch (error) {
         console.error("Error updating ticket:", error);
       }
@@ -257,7 +283,7 @@ async function showDescription(event, id) {
     const descBox = ticket.querySelector(".description");
     if (descBox) {
       if (descBox.classList.contains("hidden")) {
-        descBox.textContent = description;
+        descBox.innerText = description;
         descBox.classList.remove("hidden");
       } else {
         descBox.textContent = "";
@@ -280,7 +306,6 @@ class HelpDesk {
     this.parentEl = parentEl;
     this.tickets = [];
     this.bindToDOM();
-    this.onClick();
   }
   static get markup() {
     return `
@@ -304,6 +329,7 @@ class HelpDesk {
     this.element = this.parentEl.querySelector(HelpDesk.formSelector);
     this.btn = this.element.querySelector(HelpDesk.btnSelector);
     this.container = this.element.querySelector(HelpDesk.containerSelector);
+    this.subscribeOnEvent();
     this.renderTickets();
   }
   async fetchAllTickets() {
@@ -320,11 +346,14 @@ class HelpDesk {
     this.tickets.forEach(el => {
       const ticket = new Ticket(el);
       this.container.insertAdjacentHTML("afterbegin", ticket.add());
-      this.bindEvent(el.id);
-      this.changeStatus(el.id, el.status);
+      this.bindEvent(el.id, el.status);
     });
   }
-  bindEvent(id) {
+  async updateAndRenderTickets() {
+    await this.fetchAllTickets();
+    this.renderTickets();
+  }
+  bindEvent(id, status) {
     const ticketElement = this.container.querySelector(`[data-id="${id}"]`);
     if (!ticketElement) {
       console.error(`Ticket element with id ${id} not found`);
@@ -332,51 +361,48 @@ class HelpDesk {
     }
     const cross = ticketElement.querySelector(".delete-btn");
     if (cross) {
-      cross.addEventListener("click", async e => {
-        e.preventDefault();
-        const deleteForm = new DeleteTicketForm(id);
-        deleteForm.render(this.element);
-      });
+      cross.addEventListener("click", async e => this.deleteTicket(e, id));
     }
     const editBtn = ticketElement.querySelector(".editing-btn");
     if (editBtn) {
-      editBtn.addEventListener("click", async e => {
-        e.preventDefault();
-        const editForm = new UpdateTicketForm(id);
-        editForm.render(this.element);
-      });
-    }
-    ticketElement.addEventListener("click", e => showDescription(e, id));
-  }
-  onClick() {
-    this.btn.addEventListener("click", e => {
-      e.preventDefault();
-      const createTicketForm = new CreateTicketForm();
-      createTicketForm.render(this.element);
-    });
-  }
-  changeStatus(id, status) {
-    const ticketElement = this.container.querySelector(`[data-id="${id}"]`);
-    if (!ticketElement) {
-      console.error(`Ticket element with id ${id} not found`);
-      return;
+      editBtn.addEventListener("click", async e => this.editTicket(e, id));
     }
     const tick = ticketElement.querySelector(".tick");
     if (tick) {
-      tick.addEventListener("click", async e => {
-        e.preventDefault();
-        if (status) {
-          updateTicketById(id, {
-            status: false
-          });
-        }
-        if (!status) {
-          updateTicketById(id, {
-            status: true
-          });
-        }
-        location.reload();
+      tick.addEventListener("click", e => this.changeStatus(e, id, status));
+    }
+    ticketElement.addEventListener("click", e => showDescription(e, id));
+  }
+  subscribeOnEvent() {
+    this.btn.addEventListener("click", e => this.addTicket(e));
+  }
+  addTicket(e) {
+    e.preventDefault();
+    const createTicketForm = new CreateTicketForm();
+    createTicketForm.render(this.element);
+    createTicketForm.callback = () => this.updateAndRenderTickets();
+  }
+  deleteTicket(e, id) {
+    e.preventDefault();
+    const deleteForm = new DeleteTicketForm(id);
+    deleteForm.render(this.element);
+    deleteForm.callback = () => this.updateAndRenderTickets();
+  }
+  editTicket(e, id) {
+    e.preventDefault();
+    const editForm = new UpdateTicketForm(id);
+    editForm.render(this.element);
+    editForm.callback = () => this.updateAndRenderTickets();
+  }
+  async changeStatus(e, id, status) {
+    e.preventDefault();
+    try {
+      await updateTicketById(id, {
+        status: !status
       });
+      this.updateAndRenderTickets();
+    } catch (error) {
+      console.error(`Error updating ticket status:`, error);
     }
   }
 }
@@ -385,7 +411,6 @@ class HelpDesk {
 const container = document.querySelector(".container");
 const app_form = new HelpDesk(container);
 app_form.bindToDOM();
-app_form.onClick();
 ;// CONCATENATED MODULE: ./src/index.js
 
 
