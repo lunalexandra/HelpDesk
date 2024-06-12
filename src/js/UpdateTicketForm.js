@@ -6,6 +6,7 @@ export class UpdateTicketForm extends CreateTicketForm {
     super();
     this.title = "Изменить тикет";
     this.id = id;
+    this.callback = null;
   }
 
   async fillInput() {
@@ -29,8 +30,10 @@ export class UpdateTicketForm extends CreateTicketForm {
           name: this.shortDescription,
           description: this.fullDescription,
         });
+        if (this.callback) {
+          this.callback();
+        }
         this.close();
-        location.reload();
       } catch (error) {
         console.error("Error updating ticket:", error);
       }

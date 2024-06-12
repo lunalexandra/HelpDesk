@@ -9,11 +9,14 @@ export class DeleteTicketForm extends Modal {
         <div>Вы уверены, что хотите удалить тикет? Это действие необратимо.</div>
     `;
     this.id = id;
+    this.callback = null;
   }
 
   clickOk() {
     this.onOk(() => deleteTicketById(this.id));
-    location.reload();
+    if (this.callback) {
+      this.callback();
+    }
   }
 
   bindEvents() {

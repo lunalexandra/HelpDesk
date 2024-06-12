@@ -18,7 +18,7 @@ export async function showDescription(event, id) {
 
     if (descBox) {
       if (descBox.classList.contains("hidden")) {
-        descBox.textContent = description;
+        descBox.innerText = description;
         descBox.classList.remove("hidden");
       } else {
         descBox.textContent = "";

@@ -11,25 +11,34 @@ export class CreateTicketForm extends Modal {
         <label for="full-description">Подробное описание</label>
         <textarea name="full-description" class="input"></textarea>
     `;
+    this.callback = null;
   }
 
   getValue() {
     this.shortDescription = this.element.querySelector(
       'input[name="short-description"]',
     ).value;
-    this.fullDescription = this.element.querySelector(
-      'textarea[name="full-description"]',
-    ).value;
+    this.fullDescription = this.element
+      .querySelector('textarea[name="full-description"]')
+      .value.replace(/\r?\n/g, "\n");
   }
 
-  clickOk() {
+  async clickOk() {
     this.getValue();
     if (this.shortDescription && this.shortDescription.trim()) {
-      this.onOk(() =>
-        createTicket(this.shortDescription, this.fullDescription),
-      );
-      location.reload();
-    } else this.close();
+      try {
+        await this.onOk(() =>
+          createTicket(this.shortDescription, this.fullDescription),
+        );
+        if (this.callback) {
+          this.callback();
+        }
+      } catch (error) {
+        console.error("Error creating ticket:", error);
+      }
+    } else {
+      this.close();
+    }
   }
 
   bindEvents() {

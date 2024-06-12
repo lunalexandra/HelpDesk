@@ -17,7 +17,19 @@ export class Modal {
             `;
   }
 
+  checkModal() {
+    const modal = document.querySelector(".modal");
+    if (modal) {
+      modal.style.outline = "5px solid lightblue";
+      return true;
+    }
+    return false;
+  }
+
   render(container) {
+    if (this.checkModal()) {
+      return;
+    }
     container.insertAdjacentHTML("beforeend", this.markup());
     this.element = container.querySelector(".ticket-form");
     this.bindEvents();
